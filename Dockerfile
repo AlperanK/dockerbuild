@@ -1,13 +1,10 @@
 FROM ubuntu:20.04
 ENV DEBIAN_FRONTEND noninteractive
-RUN ln -fs /usr/share/zoneinfo/Europe/Istanbul /etc/localtime
+
 # Install dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         curl \
-        tzdata \
-        ca-certificates \
-        apt-transport-https \
         ca-certificates \
         git \
         iputils-ping \
@@ -17,18 +14,18 @@ RUN apt-get update && \
         libunwind8 \
         netcat \
         unzip \
-        gss-ntlmssp \
         wget \
-        vim
-
-# Install Docker
-RUN curl -fsSL https://get.docker.com -o get-docker.sh && \
-    sh get-docker.sh
+        vim   
 
 # Install kubectl
-RUN KUBECTL_VERSION=$(wget -qO- https://dl.k8s.io/release/stable.txt) && \
-    wget -O /usr/local/bin/kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl" && \
-    chmod +x /usr/local/bin/kubectl
+RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
+    chmod +x kubectl && \
+    mv kubectl /usr/local/bin/
+
+# Install Java
+RUN apt-get update && apt-get install -y \
+    openjdk-11-jdk \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Azure DevOps agent
 ARG AZP_AGENT_VERSION=3.224.0
