@@ -1,7 +1,10 @@
+# Use a specific tag for determinism
 FROM ubuntu:20.04
-ENV DEBIAN_FRONTEND noninteractive
 
-# Install dependencies
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies, kubectl, Java, and Azure DevOps agent
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         curl \
@@ -15,32 +18,20 @@ RUN apt-get update && \
         netcat \
         unzip \
         wget \
-        vim   
-
-# Install kubectl
-RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
+        vim \
+        openjdk-11-jdk && \
+    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
     chmod +x kubectl && \
-    mv kubectl /usr/local/bin/
-#apt-update and apt-clean
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Install Java
-RUN apt-get update && apt-get install -y \
-    --fix-missing openjdk-11-jdk \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Install Azure DevOps agent
-ARG AZP_AGENT_VERSION=3.224.0
-RUN wget https://vstsagentpackage.azureedge.net/agent/${AZP_AGENT_VERSION}/vsts-agent-linux-x64-${AZP_AGENT_VERSION}.tar.gz && \
+    mv kubectl /usr/local/bin/ && \
+    ARG AZP_AGENT_VERSION=3.224.0 && \
+    wget https://vstsagentpackage.azureedge.net/agent/${AZP_AGENT_VERSION}/vsts-agent-linux-x64-${AZP_AGENT_VERSION}.tar.gz && \
     mkdir -p /azp && \
     tar -zxvf vsts-agent-linux-x64-${AZP_AGENT_VERSION}.tar.gz -C /azp && \
-    rm -rf vsts-agent-linux-x64-${AZP_AGENT_VERSION}.tar.gz
-
-# Add a user to run the agent
-RUN useradd -m -U -s /bin/bash azp
-
-# Change permissions of the /azp directory
-RUN chown -R azp:azp /azp
+    rm -rf vsts-agent-linux-x64-${AZP_AGENT_VERSION}.tar.gz && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    useradd -m -U -s /bin/bash azp && \
+    chown -R azp:azp /azp
 
 # Set the working directory
 WORKDIR /azp
